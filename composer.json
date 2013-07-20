@@ -1,0 +1,9 @@
+{
+  "name": "unity/framework-package",
+  "description": "Unity-PHP Standard Framework Package",
+  "license": "GPL-3.0+",
+  "require" : {
+    "php": ">=5.4.3"
+  },
+  "minimum-stability": "dev"
+}
