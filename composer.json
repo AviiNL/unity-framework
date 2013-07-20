@@ -1,9 +1,14 @@
 {
-  "name": "unity/framework-package",
-  "description": "Unity-PHP Standard Framework Package",
-  "license": "GPL-3.0+",
-  "require" : {
-    "php": ">=5.4.3"
-  },
-  "minimum-stability": "dev"
+    "name": "unity/framework-package",
+    "description": "Unity-PHP Standard Framework Package",
+    "license": "MIT",
+    "authors": [
+        {"name": "Harold Iedema", "email": "harold@iedema.me"},
+    "require" : {
+        "php": ">=5.4.3"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-0": { "Unity\\": "lib/" }
+    }
 }
