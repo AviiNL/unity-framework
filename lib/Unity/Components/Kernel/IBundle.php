@@ -29,24 +29,6 @@ namespace Unity\Components\Kernel;
 
 interface IBundle
 {
-    /**
-     * Returns an array of Controller instances that are used by this bundle.
-     *
-     * @return array
-     */
-    public function getControllers();
-
-    /**
-     * Returns an array of Event instances that are used by this bundle.
-     *
-     * @return array
-     */
-    public function getEvents();
-
-    /**
-     * Returns an array of Service instances that are used by this bundle.
-     *
-     * @return array
-     */
-    public function getServices();
+    public function getName();
+    public function getObjects();
 }

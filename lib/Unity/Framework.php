@@ -27,17 +27,19 @@
 */
 namespace Unity;
 
-use Unity\Components\Kernel\Invoker;
-
-use Unity\Components\Event\EventManager;
-
+use Unity\Components\Kernel\IBundle;
+use Unity\Components\Kernel\Dispatcher;
 use Unity\Components\Kernel\Kernel;
+use Unity\Components\Kernel\Invoker;
+use Unity\Components\HTTP\Request;
+use Unity\Components\Event\EventManager;
 use Unity\Components\Container\Container;
+use Unity\Components\Annotation\AnnotationReader;
 
 /**
  * @author Harold Iedema <harold@iedema.me>
  */
-class Framework
+abstract class Framework
 {
     const   ENV_CLI = 'CLI',
             ENV_XHR = 'XHR',
@@ -56,35 +58,22 @@ class Framework
      * @param Kernel $kernel
      * @param bool $debug_mode
      */
-    public function __construct(Kernel $kernel, $debug_mode = false)
+    final public function __construct($debug_mode = false)
     {
         if ($this->is_booted) return;
 
         $this->is_debug_mode  = (bool)$debug_mode;
-        $this->kernel         = $kernel;
+        $this->kernel         = new Kernel();
         $this->parameters     = new Container();
-        $this->environment    = $this->getEnvironment();
 
         if ($debug_mode) {
             $this->debug_time_start = microtime(true);
         }
 
         self::$__instance = $this;
-    }
 
-    /**
-     * @return Kernel
-     */
-    public function getKernel()
-    {
-        return $this->kernel;
-    }
+        $this->getKernel()->loadBundle($this->registry());
 
-    /**
-     * Boots the framework.
-     */
-    public function boot()
-    {
         if ($this->is_booted) return;
         $this->is_booted = true;
 
@@ -96,11 +85,37 @@ class Framework
     }
 
     /**
+     * Returns an array of object instances of Controllers, Services and Events
+     * to register for the framework.
+     *
+     * @return array
+     */
+    abstract protected function registry();
+
+    public function getService($service)
+    {
+        return $this->kernel->getServiceManager()->getContainer()->get($service);
+    }
+
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
+
+    /**
+     * @return Kernel
+     */
+    final public function getKernel()
+    {
+        return $this->kernel;
+    }
+
+    /**
      * Returns the instantiated object of this class.
      *
      * @return \Unity\Framework
      */
-    public static function getInstance()
+    final public static function getInstance()
     {
         return self::$__instance;
     }
@@ -110,30 +125,9 @@ class Framework
      *
      * @return bool
      */
-    public function isDebug()
+    final public function isDebug()
     {
         return (bool)$this->debug_mode;
-    }
-
-    /**
-     * Returns the environment the framework is currently running in. This
-     * method can return one of the following values: WEB, XHR or CLI.
-     *
-     * @return string
-     */
-    public function getEnvironment()
-    {
-        if (!$this->environment) {
-            if (php_sapi_name() === 'cli') {
-                $this->environment = self::ENV_CLI;
-            }elseif (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-                     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-                $this->environment = self::ENV_XHR;
-            }else{
-                $this->environment = self::ENV_WEB;
-            }
-        }
-        return $this->environment;
     }
 
     /**
@@ -143,5 +137,8 @@ class Framework
     {
         $sm = $this->getKernel()->getServiceManager();
         $sm->register(new Invoker());
+        $sm->register(new AnnotationReader());
+        $sm->register(new Request());
+        $sm->register(new Dispatcher());
     }
 }

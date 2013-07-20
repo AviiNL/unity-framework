@@ -34,7 +34,7 @@ use Unity\Components\Service\ServiceManager;
 /**
  * @author Harold Iedema <harold@iedema.me>
  */
-abstract class Kernel extends Service
+class Kernel extends Service
 {
     private $controllers = array(),
             $plugins     = array(),
@@ -53,8 +53,11 @@ abstract class Kernel extends Service
         $this->services->register($this);
         $this->services->register($this->bundles);
         $this->services->register($this->events);
+    }
 
-        $this->loadBundle($this->getObjects());
+    public function getControllers()
+    {
+        return $this->controllers;
     }
 
     public function loadBundle($objects)
@@ -68,35 +71,10 @@ abstract class Kernel extends Service
                 $this->events->register($object);
             }elseif ($object instanceof IBundle && !$this->bundles->exists($object)) {
                 $this->bundles->register($object);
-                $this->registerBundle($object);
+                $this->loadBundle($object->getObjects());
             }
         }
     }
-
-    /**
-     * Registers a bundle.
-     *
-     * @param IBundle $bundle
-     */
-    private function registerBundle(IBundle $bundle)
-    {
-
-        $objects = array_merge($bundle->getControllers(),
-                               $bundle->getEvents(),
-                               $bundle->getServices());
-        $this->loadBundle($objects);
-    }
-
-    /**
-     * Returns an array of object instances of Controllers, Services and Plugins
-     * which should be loaded throughout the framework.
-     *
-     * Objects referenced in this array should implement IService, IEvent
-     * or IController.
-     *
-     * @return array
-     */
-    protected abstract function getObjects();
 
     /**
      * Returns the ServiceManager

@@ -47,20 +47,59 @@ class BundleManager extends Service
      *
      * @param IBundle $bundle
      */
-    public function register(IBundle $bundle)
+    public function register(Bundle $bundle)
     {
         $reflector = new \ReflectionClass($bundle);
-        $this->bundles[$this->bundlify(get_class($bundle))] = array(
+        $this->bundles[$bundle->getName()] = array(
             'class' => $bundle,
             'location' => dirname($reflector->getFileName())
         );
     }
 
+    /**
+     * Service Configurator
+     *
+     * @param Invoker $invoker
+     */
     protected function configure(Invoker $invoker)
     {
         $this->invoker = $invoker;
     }
 
+    /**
+     * Returns an array of registered bundles.
+     *
+     * @return array
+     */
+    public function getBundles()
+    {
+        return $this->bundles;
+    }
+
+    /**
+     *
+     * @param unknown_type $bundle
+     * @throws BundleNotFoundException
+     * @return Bundle
+     */
+    public function getBundle($bundle)
+    {
+        if (!isset($this->bundles[$bundle])) {
+            throw new BundleNotFoundException($bundle);
+        }
+        return $this->bundles[$bundle];
+    }
+
+    /**
+     * Returns either an object registered in a bundle or a return value of a
+     * public method from an object from the bundle.
+     *
+     * @param string $alias
+     * @param array $named_args
+     * @throws \InvalidArgumentException
+     * @throws BundleNotFoundException
+     * @return mixed
+     */
     public function getFromAlias($alias, $named_args = array())
     {
         if (strpos($alias, ':') === false) {
@@ -116,42 +155,11 @@ class BundleManager extends Service
      * @param IBundle $bundle
      * @return bool
      */
-    public function exists(IBundle $bundle)
+    public function exists($bundle)
     {
-        return isset($this->bundles[$this->bundlify(get_class($bundle))]);
+        $name = ($bundle instanceof Bundle) ? $bundle->getName() : $bundle;
+        return isset($this->bundles[$name]);
     }
 
-    /**
-     * Creates a name for the bundle.
-     *
-     * @param string $text
-     * @return string
-     */
-    private function bundlify($text)
-    {
-        $text = trim($this->slugify($text));
-        $text = str_replace(' ', '', ucwords(str_replace('-', ' ', $text)));
-        return $text;
-    }
-
-    /**
-     * Creates a slug based on the given $text. Returns a slugified string or
-     * false on failure.
-     *
-     * @param string $text
-     * @return boolean|string
-     */
-    private function slugify($text)
-    {
-        $text = preg_replace('~[^\\pL\d]+~u', '-', $text);
-        $text = trim($text, '-');
-        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
-        $text = strtolower($text);
-        $text = preg_replace('~[^-\w]+~', '', $text);
-        if (empty($text)) {
-            return false;
-        }
-        return $text;
-    }
 }
 

@@ -29,5 +29,5 @@ namespace Unity\Components\Kernel;
 
 interface IController
 {
-
+    public function render($method, array $args);
 }
