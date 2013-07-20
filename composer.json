@@ -3,7 +3,8 @@
     "description": "Unity-PHP Standard Framework Package",
     "license": "MIT",
     "authors": [
-        {"name": "Harold Iedema", "email": "harold@iedema.me"},
+        {"name": "Harold Iedema", "email": "harold@iedema.me"}
+    ],
     "require" : {
         "php": ">=5.4.3"
     },
