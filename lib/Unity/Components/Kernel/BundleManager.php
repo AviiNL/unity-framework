@@ -52,6 +52,7 @@ class BundleManager extends Service
         $reflector = new \ReflectionClass($bundle);
         $this->bundles[$bundle->getName()] = array(
             'class' => $bundle,
+            'objects' => $bundle->getObjects(),
             'location' => dirname($reflector->getFileName())
         );
     }
