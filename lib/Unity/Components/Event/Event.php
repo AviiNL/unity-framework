@@ -27,13 +27,14 @@
 */
 namespace Unity\Components\Event;
 
+use Unity\Components\Kernel\IEvent;
 use Unity\Components\Kernel\Invoker;
 use Unity\Components\Container\Container;
 
 /**
  * @author Harold Iedema <harold@iedema.me>
  */
-class Event
+class Event implements IEvent
 {
     private $name        = null,
             $run_once    = true,

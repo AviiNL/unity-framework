@@ -27,45 +27,76 @@
 */
 namespace Unity\Components\Kernel;
 
+use Unity\Components\Service\Service;
+use Unity\Components\Event\EventManager;
 use Unity\Components\Service\ServiceManager;
 
 /**
  * @author Harold Iedema <harold@iedema.me>
  */
-abstract class Kernel
+abstract class Kernel extends Service
 {
     private $controllers = array(),
             $plugins     = array(),
-            $services    = null;
+            $services    = null,
+            $events      = null,
+            $bundles     = null;
 
     final public function __construct()
     {
-        $this->services = new ServiceManager();
+        $this->setName('kernel');
 
-        $objects = array_merge($this->boot(), array(new KernelController()));
+        $this->services = new ServiceManager();
+        $this->events   = new EventManager();
+        $this->bundles  = new BundleManager();
+
+        $this->services->register($this);
+        $this->services->register($this->bundles);
+        $this->services->register($this->events);
+
+        $this->loadBundle($this->getObjects());
+    }
+
+    public function loadBundle($objects)
+    {
         foreach($objects as $object) {
             if ($object instanceof IController) {
                 $this->controllers[] = $object;
-            }elseif ($object instanceof IPlugin) {
-                if (isset($this->plugins[$plugin->getName()])) {
-                    throw new PluginAlreadyRegisteredException($object->getName());
-                }
-                $this->plugins[$object->getName()] = $object;
             }elseif ($object instanceof IService) {
                 $this->services->register($object);
+            }elseif ($object instanceof IEvent) {
+                $this->events->register($object);
+            }elseif ($object instanceof IBundle && !$this->bundles->exists($object)) {
+                $this->bundles->register($object);
+                $this->registerBundle($object);
             }
         }
     }
 
     /**
-     * Returns an array of object instances of Controllers and Plugins that
-     * should be loaded throughout the framework.
+     * Registers a bundle.
      *
-     * Objects referenced in this array should implement IPlugin or IController.
+     * @param IBundle $bundle
+     */
+    private function registerBundle(IBundle $bundle)
+    {
+
+        $objects = array_merge($bundle->getControllers(),
+                               $bundle->getEvents(),
+                               $bundle->getServices());
+        $this->loadBundle($objects);
+    }
+
+    /**
+     * Returns an array of object instances of Controllers, Services and Plugins
+     * which should be loaded throughout the framework.
+     *
+     * Objects referenced in this array should implement IService, IEvent
+     * or IController.
      *
      * @return array
      */
-    protected abstract function boot();
+    protected abstract function getObjects();
 
     /**
      * Returns the ServiceManager
@@ -75,5 +106,13 @@ abstract class Kernel
     public function getServiceManager()
     {
         return $this->services;
+    }
+
+    /**
+     * @return \Unity\Components\Event\EventManager
+     */
+    public function getEventManager()
+    {
+        return $this->events;
     }
 }

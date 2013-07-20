@@ -142,7 +142,6 @@ class Framework
     private function loadDefaultServices()
     {
         $sm = $this->getKernel()->getServiceManager();
-        $sm->register(new EventManager());
         $sm->register(new Invoker());
     }
 }

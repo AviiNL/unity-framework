@@ -52,17 +52,17 @@ class ServiceManager extends Service
      */
     public function __construct()
     {
-        $this->setName('service-manager');
-
         // Prevent instance duplication.
         if (self::$__instance instanceof self) {
             throw new \RuntimeException(
                 'Another instance of ' . __CLASS__ . ' already exists!');
         }
         self::$__instance = $this;
-        $this->container = new Container();
 
-        // Register self.
+        $this->container = new Container();
+        $this->setName('service-manager');
+
+        // Register self
         $this->register($this);
     }
 

@@ -62,6 +62,9 @@ abstract class Service implements IService
      */
     final protected function setName($name)
     {
+        if (!$this->container instanceof Container) {
+            $this->container = new Container();
+        }
         if (empty($name)) {
             throw new \InvalidArgumentException('Service name cannot be empty.');
         }
