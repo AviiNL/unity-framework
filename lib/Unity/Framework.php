@@ -27,12 +27,13 @@
 */
 namespace Unity;
 
-use Unity\Component\Kernel\FileNotFoundException;
+require_once __DIR__ . '/Utilities.php';
 
 use Unity\Component\Kernel\IBundle;
 use Unity\Component\Kernel\Dispatcher;
 use Unity\Component\Kernel\Kernel;
 use Unity\Component\Kernel\Invoker;
+use Unity\Component\Kernel\FileNotFoundException;
 use Unity\Component\Yaml\YamlService;
 use Unity\Component\HTTP\Request;
 use Unity\Component\Event\EventManager;
