@@ -53,12 +53,12 @@ $app->getService('dispatcher')->dispatchFromRequest();
 <?php
 class Application extends Unity\Framework
 {
-    public function registry()
+    public function boot()
     {
-        return array(
+        $this->register(array(
             new myFirstService(),
             new MyFirstController()
-        );
+        ));
     }
 }
 ```
