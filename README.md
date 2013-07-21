@@ -106,9 +106,13 @@ class MyFirstService extends Service
     
     public function greet($name)
     {
-        return sprintf('<h1>Hello, %s', $name);
+        return sprintf('<h1>Hello, %s.<h1>', $name);
     }
 }
+
+
+// url: /hello/Jenny
+// output: Hello, Jenny.
 ```
 
 So, what happens here is that when you open `http://localhost/hello/Jenny', the method *hello* we've just written will be
