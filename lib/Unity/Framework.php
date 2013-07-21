@@ -27,14 +27,19 @@
 */
 namespace Unity;
 
-use Unity\Components\Kernel\IBundle;
-use Unity\Components\Kernel\Dispatcher;
-use Unity\Components\Kernel\Kernel;
-use Unity\Components\Kernel\Invoker;
-use Unity\Components\HTTP\Request;
-use Unity\Components\Event\EventManager;
-use Unity\Components\Container\Container;
-use Unity\Components\Annotation\AnnotationReader;
+use Unity\Component\Kernel\FileNotFoundException;
+
+use Unity\Component\Kernel\IBundle;
+use Unity\Component\Kernel\Dispatcher;
+use Unity\Component\Kernel\Kernel;
+use Unity\Component\Kernel\Invoker;
+use Unity\Component\Yaml\YamlService;
+use Unity\Component\HTTP\Request;
+use Unity\Component\Event\EventManager;
+use Unity\Component\Container\Container;
+use Unity\Component\Parameter\Parameters;
+use Unity\Component\Annotation\AnnotationReader;
+use Unity\Component\Service\ServiceNotFoundException;
 
 /**
  * @author Harold Iedema <harold@iedema.me>
@@ -60,54 +65,95 @@ abstract class Framework
      */
     final public function __construct($debug_mode = false)
     {
-        if ($this->is_booted) return;
-
         $this->is_debug_mode  = (bool)$debug_mode;
+        $yaml_service         = new YamlService();
         $this->kernel         = new Kernel();
-        $this->parameters     = new Container();
+        $this->parameters     = new Parameters($yaml_service);
+
+        $this->kernel->getServiceManager()->register($this->parameters);
+        $this->kernel->getServiceManager()->register($yaml_service);
 
         if ($debug_mode) {
             $this->debug_time_start = microtime(true);
         }
 
         self::$__instance = $this;
+        $this->initialize();
+    }
 
-        $this->getKernel()->loadBundle($this->registry());
-
-        if ($this->is_booted) return;
+    private function initialize()
+    {
+        if ($this->is_booted) return
         $this->is_booted = true;
 
-        // Load services
         $this->loadDefaultServices();
 
-        // Resolve service dependencies & boot.
-        $this->getKernel()->getServiceManager()->load();
+        if(!method_exists($this, 'boot')) {
+            throw new \RuntimeException('Application class should implement the protected method "boot".');
+        }
+
+        $this->boot();
+        $this->kernel->getServiceManager()->load();
     }
 
     /**
-     * Returns an array of object instances of Controllers, Services and Events
-     * to register for the framework.
+     * Registers one or more objects. All objects should be an instance of the
+     * implementation of: IBundle, IController, IEvent or IService.
      *
-     * @return array
+     * You can pass an array to this method to register more objects at once.
+     *
+     * @param mixed $object
+     * @return self
      */
-    abstract protected function registry();
-
-    public function getService($service)
+    final protected function register($objects)
     {
-        return $this->kernel->getServiceManager()->getContainer()->get($service);
+        $this->kernel->register($objects);
     }
 
+    /**
+     * Loads parameters from the given YAML file.
+     *
+     * @param string $yaml_file
+     */
+    final protected function loadParameters($yaml_file)
+    {
+        if (!file_exists($yaml_file)) {
+            throw new FileNotFoundException($yaml_file);
+        }
+        $this->parameters->loadFromYAML($yaml_file);
+    }
+
+    /**
+     * Registers objects from a YAML file.
+     *
+     * @param unknown_type $filename
+     * @throws FileNotFoundException
+     */
+    final protected function registerFromYAML($filename)
+    {
+        $this->kernel->registerFromYAML($filename);
+    }
+
+    /**
+     * Returns a service instance.
+     *
+     * @param unknown_type $service
+     * @return Ambigous <\Unity\Component\Container\mixed, string>
+     */
+    public function getService($service)
+    {
+        if (null === ($object = $this->kernel->getServiceManager()->getContainer()->get($service))) {
+            throw new ServiceNotFoundException($service);
+        }
+        return $object;
+    }
+
+    /**
+     * @return \Unity\Component\Parameter\Parameters
+     */
     public function getParameters()
     {
         return $this->parameters;
-    }
-
-    /**
-     * @return Kernel
-     */
-    final public function getKernel()
-    {
-        return $this->kernel;
     }
 
     /**
@@ -135,7 +181,7 @@ abstract class Framework
      */
     private function loadDefaultServices()
     {
-        $sm = $this->getKernel()->getServiceManager();
+        $sm = $this->kernel->getServiceManager();
         $sm->register(new Invoker());
         $sm->register(new AnnotationReader());
         $sm->register(new Request());
