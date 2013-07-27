@@ -27,6 +27,8 @@
 */
 namespace Unity;
 
+use Unity\Component\HTTP\Response;
+
 require_once __DIR__ . '/Utilities.php';
 
 use Unity\Component\Kernel\IBundle;
@@ -186,6 +188,7 @@ abstract class Framework
         $sm->register(new Invoker());
         $sm->register(new AnnotationReader());
         $sm->register(new Request());
+        $sm->register(new Response());
         $sm->register(new Dispatcher());
     }
 }
