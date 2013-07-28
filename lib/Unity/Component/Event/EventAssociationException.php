@@ -26,3 +26,16 @@
  -------------------------------------------------------------------------------
 */
 namespace Unity\Component\Event;
+
+/**
+ * @author Harold Iedema <harold@iedema.me>
+ */
+class EventAssociationException extends \Exception
+{
+    public function __construct($shared, $event)
+    {
+        parent::__construct(sprintf(
+            'The SharedEventListener %s is not associated with EventListener %s.'
+        ), $shared, $event);
+    }
+}

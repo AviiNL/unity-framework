@@ -27,22 +27,18 @@
 */
 namespace Unity;
 
-use Unity\Component\HTTP\Response;
-
 require_once __DIR__ . '/Utilities.php';
 
-use Unity\Component\Kernel\IBundle;
 use Unity\Component\Kernel\Dispatcher;
 use Unity\Component\Kernel\Kernel;
 use Unity\Component\Kernel\Invoker;
 use Unity\Component\Kernel\FileNotFoundException;
 use Unity\Component\Yaml\YamlService;
 use Unity\Component\HTTP\Request;
-use Unity\Component\Event\EventManager;
-use Unity\Component\Container\Container;
 use Unity\Component\Parameter\Parameters;
 use Unity\Component\Annotation\AnnotationReader;
 use Unity\Component\Service\ServiceNotFoundException;
+use Unity\Component\Kernel\Locator;
 
 /**
  * @author Harold Iedema <harold@iedema.me>
@@ -97,6 +93,15 @@ abstract class Framework
 
         $this->boot();
         $this->kernel->getServiceManager()->load();
+    }
+
+    /**
+     * Method executed when a 404 occurs. The Application class should override
+     * this method.
+     */
+    public function execute404()
+    {
+        require __DIR__ . '/Resources/404.html';
     }
 
     /**
@@ -186,9 +191,9 @@ abstract class Framework
     {
         $sm = $this->kernel->getServiceManager();
         $sm->register(new Invoker());
+        $sm->register(new Locator());
         $sm->register(new AnnotationReader());
         $sm->register(new Request());
-        $sm->register(new Response());
         $sm->register(new Dispatcher());
     }
 }

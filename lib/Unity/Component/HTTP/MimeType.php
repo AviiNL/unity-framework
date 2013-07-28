@@ -574,7 +574,6 @@ class MimeType
     const IMAGE_GIF                                         = 'image/gif';
     const IMAGE_IEF                                         = 'image/ief';
     const IMAGE_JPEG                                        = 'image/jpeg';
-    const IMAGE_JPEG                                        = 'image/jpeg';
     const IMAGE_KTX                                         = 'image/ktx';
     const IMAGE_PNG                                         = 'image/png';
     const IMAGE_PRS_BTIF                                    = 'image/prs.btif';

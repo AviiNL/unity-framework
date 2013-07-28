@@ -26,3 +26,26 @@
  -------------------------------------------------------------------------------
 */
 namespace Unity\Component\Event;
+
+class SharedEventListener extends EventListener
+{
+    /**
+     * Returns the hooks associated with this EventListener.
+     *
+     * @return array
+     */
+    public function getHooks()
+    {
+        return $this->hooks;
+    }
+
+    /**
+     * Returns the Parameters associated with this EventListener.
+     *
+     * @return \Unity\Component\Container\Container
+     */
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
+}

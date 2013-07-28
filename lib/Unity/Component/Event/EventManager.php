@@ -28,7 +28,6 @@
 namespace Unity\Component\Event;
 
 use Unity\Component\Kernel\Invoker;
-use Unity\Component\Service\ServiceManager;
 use Unity\Component\Service\Service;
 
 /**
@@ -39,8 +38,9 @@ class EventManager extends Service
     /**
      * @var \Unity\Component\Kernel\Invoker
      */
-    private $invoker = null,
-            $events  = array();
+    private $invoker       = null,
+            $events        = array(),
+            $shared_events = array();
 
     public function __construct()
     {
@@ -62,10 +62,13 @@ class EventManager extends Service
      * @param Event $event
      * @throws EventAlreadyExistsException
      */
-    public function register(Event $event)
+    public function register(EventListener $event)
     {
         if( isset($this->events[$event->getName()])) {
             throw new EventAlreadyExistsException($event->getName());
+        }
+        if (isset($this->shared_events[$event->getName()])) {
+            $event->importSharedEventListener($this->shared_events[$event->getName()]);
         }
         $this->events[$event->getName()] = $event;
     }
@@ -80,7 +83,10 @@ class EventManager extends Service
     public function getEvent($name)
     {
         if (!isset($this->events[$name])) {
-            throw new EventNotFoundException($name);
+            if (!isset($this->shared_events[$name])) {
+                $this->shared_events[$name] = new SharedEventListener($name);
+            }
+            return $this->shared_events[$name];
         }
         return $this->events[$name];
     }
@@ -94,12 +100,12 @@ class EventManager extends Service
      */
     public function trigger($event, $named_args = array())
     {
-        if(!$event instanceof Event) {
+        if(!$event instanceof EventListener) {
             if(!isset($this->events[$event])) {
                 throw new EventNotFoundException($event);
             }
             $event = $this->events[$event];
         }
-        $event->trigger($this->invoker, $named_args);
+        return $event->trigger($this->invoker, $named_args);
     }
 }

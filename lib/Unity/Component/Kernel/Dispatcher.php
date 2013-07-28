@@ -35,6 +35,9 @@ use Unity\Component\HTTP\Request;
 use Unity\Component\Service\Service;
 use Unity\Component\Service\ServiceManager;
 use Unity\Component\Annotation\AnnotationReader;
+use Unity\Component\Event\EventManager;
+use Unity\Component\Event\EventListener;
+use Unity\Framework;
 
 /**
  * The Dispatcher class is responsible for dispatching Controllers based on the
@@ -71,6 +74,10 @@ class Dispatcher extends Service
      */
     private $annotation_reader;
 
+    /**
+     * @var \Unity\Component\Event\EventManager
+     */
+    private $em;
 
     /**
      * Constructor
@@ -81,6 +88,7 @@ class Dispatcher extends Service
              ->addDependency('kernel')
              ->addDependency('invoker')
              ->addDependency('bundle-manager')
+             ->addDependency('event-manager')
              ->addDependency('annotation-reader')
              ->addDependency('request');
     }
@@ -96,13 +104,27 @@ class Dispatcher extends Service
                                  Invoker $invoker,
                                  BundleManager $bm,
                                  AnnotationReader $ar,
+                                 EventManager $em,
                                  Request $request)
     {
+        $this->em                = $em;
         $this->kernel            = $kernel;
         $this->invoker           = $invoker;
         $this->request           = $request;
         $this->annotation_reader = $ar;
         $this->bundle_manager    = $bm;
+
+        $this->em->register(new EventListener('dispatcher.on_route', true));
+        $this->em->register(new EventListener('dispatcher.on_resource', true));
+        $this->em->register(new EventListener('dispatcher.404', true));
+
+        $this->em->getEvent('dispatcher.404')->bind(function(EventListener $e){
+            if (!headers_sent()) {
+                header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+                header("Status: 404 Not Found");
+            }
+            Framework::getInstance()->execute404();
+        }, 0);
     }
 
     public function dispatchFromRequest()
@@ -119,7 +141,17 @@ class Dispatcher extends Service
             if ($route->matchesPath($this->request->getPath())) {
                 $object = $data['callable'][0];
                 $method = $data['callable'][1];
-                return $object->render($method, $route->getNamedArguments());
+                $event  = $this->em->getEvent('dispatcher.on_route');
+                /* @var $event \Unity\Component\Event\EventListener */
+                $event->setParameter('controller', $object);
+                $event->setParameter('method', $method);
+                $event->setParameter('args', $route->getNamedArguments());
+                $event->setParameter('route', $route);
+                $this->em->trigger($event);
+                $object = $event->getParameter('object', $object);
+                $method = $event->getParameter('method', $method);
+                $args   = $event->getParameter('args', $route->getNamedArguments());
+                return $object->render($method, $args->toArray());
             }
         }
 
@@ -132,7 +164,7 @@ class Dispatcher extends Service
             }
         }
 
-        echo '404';
+        $this->em->trigger('dispatcher.404', array('routes' => $routes));
     }
 
     // _________________________________________________________/ PRIVATES \____
