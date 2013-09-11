@@ -10,11 +10,12 @@ Installation
 
 Simply install via composer:
 
-    "require" : {
-      "php" : ">=5.4.3",
-      "unity/framework-package": "dev-master"
-    }
-  
+```json
+"require" : {
+    "php" : ">=5.4.3",
+    "unity/framework-package": "dev-master"
+}
+```
   
 A simple example to get things rolling
 --------------------------------------
