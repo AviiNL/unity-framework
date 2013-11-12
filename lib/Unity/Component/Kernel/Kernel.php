@@ -27,6 +27,8 @@
 */
 namespace Unity\Component\Kernel;
 
+use Unity\Framework;
+
 use Unity\Component\Bundle\BundleManager;
 
 use Unity\Component\Yaml\Yaml;
@@ -43,21 +45,38 @@ class Kernel extends Service
             $plugins     = array(),
             $services    = null,
             $events      = null,
-            $bundles     = null;
+            $bundles     = null,
+            $application = null;
 
-    final public function __construct()
+    final public function __construct(Framework $application)
     {
         $this->setName('kernel');
 
-        $this->services = new ServiceManager();
-        $this->events   = new EventManager();
-        $this->bundles  = new BundleManager();
+        $this->services    = new ServiceManager();
+        $this->events      = new EventManager();
+        $this->bundles     = new BundleManager();
+        $this->application = $application;
 
         $this->services->register($this);
         $this->services->register($this->bundles);
         $this->services->register($this->events);
     }
 
+    /**
+     * Returns the application instance.
+     *
+     * @return \Unity\Framework
+     */
+    public function getApplication()
+    {
+        return $this->application;
+    }
+
+    /**
+     * Returns all registered controllers.
+     *
+     * @return array
+     */
     public function getControllers()
     {
         return $this->controllers;

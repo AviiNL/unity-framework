@@ -27,6 +27,8 @@
 */
 namespace Unity;
 
+use Unity\Component\Cache\FileCacheService;
+
 require_once __DIR__ . '/Utilities.php';
 
 use Unity\Component\Kernel\Dispatcher;
@@ -56,7 +58,8 @@ abstract class Framework
             $environment,
             $is_debug_mode,
             $is_booted,
-            $debug_time_start;
+            $debug_time_start,
+            $app_root_dir;
 
     /**
      * @param Kernel $kernel
@@ -66,11 +69,15 @@ abstract class Framework
     {
         $this->is_debug_mode  = (bool)$debug_mode;
         $yaml_service         = new YamlService();
-        $this->kernel         = new Kernel();
+        $this->kernel         = new Kernel($this);
         $this->parameters     = new Parameters($yaml_service);
 
         $this->kernel->getServiceManager()->register($this->parameters);
         $this->kernel->getServiceManager()->register($yaml_service);
+
+        $reflector = new \ReflectionObject($this);
+        $this->app_root_dir = dirname($reflector->getFileName());
+        $this->parameters->setParameter('app_root_dir', $this->app_root_dir);
 
         if ($debug_mode) {
             $this->debug_time_start = microtime(true);
@@ -195,5 +202,6 @@ abstract class Framework
         $sm->register(new AnnotationReader());
         $sm->register(new Request());
         $sm->register(new Dispatcher());
+        $sm->register(new FileCacheService());
     }
 }

@@ -66,6 +66,17 @@ class Parameters extends Service
     }
 
     /**
+     * Sets a value.
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public function setParameter($key, $value)
+    {
+        $this->container->set($key, $value);
+    }
+
+    /**
      * Loads a YAML file.
      *
      * @param string $filename

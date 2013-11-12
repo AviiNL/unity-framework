@@ -159,7 +159,10 @@ class Dispatcher extends Service
         foreach ($this->bundle_manager->getBundles() as $bundle) {
             /* @var $bundle \Unity\Component\Kernel\Bundle */
             if(null !== ($file = $bundle['class']->findResource($this->request->getPath()))) {
-                echo '<h1>TODO</h1><i>Implement teh file rendererrrrrawr!<hr>';
+                $this->em->trigger('dispatcher.on_resource', array(
+                        'resource' => $file,
+                        'file'     => $file
+                ));
                 return;
             }
         }
