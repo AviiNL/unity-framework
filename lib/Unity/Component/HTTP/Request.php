@@ -134,6 +134,14 @@ class Request extends Service
     }
 
     /**
+     * @return string
+     */
+    public function getRequestUri()
+    {
+        return isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+    }
+
+    /**
      * Returns a request parameter.
      *
      * @param string $key

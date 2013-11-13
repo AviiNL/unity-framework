@@ -138,6 +138,10 @@ class Parser
      */
     private function parseArguments($data)
     {
+        if (false !== ($json = json_decode($data, true))) {
+            return $json;
+        }
+
         if((strpos($data, ',') === false
             && strpos($data, '=') === false) || empty($data)) {
           return trim($data, '"');

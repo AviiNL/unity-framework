@@ -109,7 +109,7 @@ abstract class Bundle implements IBundle
     /**
      * Registers one or more controllers to this bundle.
      *
-     * @param IController $controllers
+     * @param array $controllers
      */
     final protected function registerControllers($controllers)
     {
@@ -119,7 +119,7 @@ abstract class Bundle implements IBundle
     /**
      * Registers one or more services to this bundle.
      *
-     * @param IService $services
+     * @param array $services
      */
     final protected function registerServices($services)
     {
@@ -129,7 +129,7 @@ abstract class Bundle implements IBundle
     /**
      * Registers one or more events to this bundle.
      *
-     * @param IEvent $events
+     * @param array $events
      */
     final protected function registerEvents($events)
     {

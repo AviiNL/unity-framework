@@ -44,11 +44,36 @@ class AnnotationCollection
         $this->build();
     }
 
+    /**
+     * Returns an associative array of methods, indexed by name.
+     *
+     * @return array
+     */
     public function getMethods()
     {
         return $this->methods;
     }
 
+    /**
+     * Returns the AnnotationMethod associated with the given method name.
+     *
+     * @param string $name
+     * @throws \RuntimeException
+     * @return AnnotationMethod
+     */
+    public function getMethod($name)
+    {
+        if (!isset($this->methods[$name])) {
+            throw new \RuntimeException('Method ' . $name . ' not found in AnnotationCollection for class ' . $this->getName());
+        }
+        return $this->methods[$name];
+    }
+
+    /**
+     * Returns the name of the class.
+     *
+     * @return string
+     */
     public function getName()
     {
         return $this->reflector->getName();

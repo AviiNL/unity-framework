@@ -27,6 +27,9 @@
 */
 namespace Unity\Component\Event;
 
+/**
+ * @author Harold Iedema <harold@iedema.me>
+ */
 class SharedEventListener extends EventListener
 {
     /**

@@ -27,6 +27,14 @@
 */
 namespace Unity;
 
+use Unity\Component\Security\UserManager;
+
+use Unity\Component\Security\Firewall;
+
+use Unity\Component\Security\Session;
+
+use Unity\Component\Security\SessionManager;
+
 use Unity\Component\Cache\FileCacheService;
 
 require_once __DIR__ . '/Utilities.php';
@@ -74,6 +82,10 @@ abstract class Framework
 
         $this->kernel->getServiceManager()->register($this->parameters);
         $this->kernel->getServiceManager()->register($yaml_service);
+        $this->kernel->getServiceManager()->register(new SessionManager());
+        $this->kernel->getServiceManager()->register(new Session());
+        $this->kernel->getServiceManager()->register(new Firewall());
+        $this->kernel->getServiceManager()->register(new UserManager());
 
         $reflector = new \ReflectionObject($this);
         $this->app_root_dir = dirname($reflector->getFileName());

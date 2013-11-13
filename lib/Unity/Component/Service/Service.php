@@ -92,17 +92,16 @@ abstract class Service implements IService
     }
 
     /**
-     * Returns a service by the given name.
-     *
-     * @param string $name
+     * @param string $service_id
+     * @throws ServiceNotFoundException
      * @return Service
      */
-    protected function get($name)
+    public function getService($service_id)
     {
-        if(null === ($svc = $this->container->get($name))) {
-            throw new ServiceNotFoundException($name);
+        if (null !== ($service = $this->container->get($service_id))) {
+            return $service;
         }
-        return $svc;
+        throw new ServiceNotFoundException($service_id);
     }
 
     /**

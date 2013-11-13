@@ -52,7 +52,7 @@ class AnnotationReader extends Service
         if (is_object($class)) $class = get_class($class);
         if (isset($this->cache[$class])) return $this->cache[$class];
         $reflector = new \ReflectionClass($class);
-        return $this->cache[$class] = new AnnotationCollection(new Parser($reflector));
+        return ($this->cache[$class] = new AnnotationCollection(new Parser($reflector)));
     }
 
     public function getMethod($class, $method)

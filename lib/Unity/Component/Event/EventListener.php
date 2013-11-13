@@ -36,12 +36,12 @@ use Unity\Component\Container\Container;
  */
 class EventListener implements IEvent
 {
-    private $name        = null,
-            $run_once    = true,
-            $hooks       = array(),
-            $is_executed = false,
-            $parameters  = null,
-            $cancel      = false;
+    protected $name        = null,
+              $run_once    = true,
+              $hooks       = array(),
+              $is_executed = false,
+              $parameters  = null,
+              $cancel      = false;
 
     /**
      * Creates a new event by the name $name. If $run_once is set to true, this
@@ -151,7 +151,7 @@ class EventListener implements IEvent
         usort($this->hooks, function($a, $b){
             return $a['priority'] > $b['priority'] ? -1 : 1;
         });
-        $named_args[] = $this;
+        $named_args['event'] = $this;
         foreach($this->hooks as $hook) {
             if ($this->cancel) break;
             $invoker->invoke($hook['callback'], $named_args);
