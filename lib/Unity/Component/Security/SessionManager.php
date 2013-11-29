@@ -1,6 +1,10 @@
 <?php
 namespace Unity\Component\Security;
 
+use Unity\Component\Event\EventListener;
+
+use Unity\Component\Event\EventManager;
+
 use Unity\Component\Yaml\Yaml;
 
 use Unity\Component\Service\Service;
@@ -18,18 +22,22 @@ class SessionManager extends Service implements \SessionHandlerInterface
      * @var Container
      */
     private $storage        = null;
+    private $original_stor  = null;
 
     /**
      * @var YamlService
      */
     private $yaml_service   = null;
 
+    /**
+     * @var EventManager
+     */
+    private $event_manager  = null;
+
     private $session_id     = null;
     private $session_prefix = null;
     private $storage_path   = null;
     private $storage_time   = null;
-
-
 
     /**
      * Constructor
@@ -37,26 +45,29 @@ class SessionManager extends Service implements \SessionHandlerInterface
     public function __construct()
     {
         $this->setName('session-manager')
-             ->addDependency('parameters')
-             ->addDependency('yaml');
+             ->addDependency('yaml')
+             ->addDependency('event-manager');
     }
 
     /**
      * @param Parameters $parameters
      */
-    protected function configure(Parameters $parameters, YamlService $yaml_service)
+    protected function configure(YamlService $yaml_service, EventManager $em)
     {
-        $this->yaml_service = $yaml_service;
+        $this->yaml_service  = $yaml_service;
+        $this->event_manager = $em;
 
-        if (null === ($this->storage_path = $parameters->getParameter('framework.session.storage_path'))) {
-            throw new ParameterNotFoundException('framework.session.storage_path');
-        }
-        if (null === ($this->storage_time = $parameters->getParameter('framework.session.storage_time'))) {
-            throw new ParameterNotFoundException('framework.session.storage_time');
-        }
-        if (null === ($this->session_prefix = $parameters->getParameter('framework.session.file_prefix'))) {
-            throw new ParameterNotFoundException('framework.session.file_prefix');
-        }
+        $em->register(new EventListener('session.open'));
+        $em->register(new EventListener('session.close'));
+
+        $this->setOptionPrefix('framework.session')
+             ->addOption('storage_path', '/tmp')
+             ->addOption('storage_time', 86400)
+             ->addOption('file_prefix', 'sess_');
+
+        $this->storage_path   = $this->getOption('storage_path');
+        $this->storage_time   = $this->getOption('storage_time');
+        $this->session_prefix = $this->getOption('file_prefix');
 
         session_set_save_handler($this, true);
         session_start();
@@ -76,10 +87,13 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function open($save_path, $name)
     {
+        $sess_id = session_id();
         if (isset($_COOKIE[$name])) {
-            // Refresh cookie
             $this->session_id = $_COOKIE[$name];
+        } elseif (!empty($sess_id)) {
+            $this->session_id = session_id();
         } else {
+            session_id(uniqid());
             $this->session_id = session_id();
         }
         setcookie($name, $this->session_id, time() + $this->storage_time);
@@ -90,18 +104,19 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function read($session_id)
     {
-        $data   = [];
-
+        $data = [];
         if (file_exists($this->getStorageFile())) {
-            $data = $this->yaml_service->parseFile($this->getStorageFile());
+            $data = json_decode(file_get_contents($this->getStorageFile()), true);
             if (isset($data['session_id']) && $data['session_id'] != $this->session_id) {
                 throw new \RuntimeException('Session id mismatch from storage! Possible security breach.');
             }
         }
         $this->storage = new Container($data);
+        $this->original_stor = new Container($data);
         if (!file_exists($this->getStorageFile())) {
             $this->storage->set('session_id', $this->session_id);
         }
+        $this->event_manager->trigger('session.open');
     }
 
     /**
@@ -111,8 +126,11 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function write($session_id, $session_data)
     {
-        $data = Yaml::dump($this->storage->toArray());
-        file_put_contents($this->getStorageFile(), $data);
+        $this->event_manager->trigger('session.close');
+        $data = json_encode($this->storage->toArray());
+        if ($data != json_encode($this->original_stor->toArray())) {
+            file_put_contents($this->getStorageFile(), $data);
+        }
     }
 
     /**
@@ -137,8 +155,20 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function destroy($session_id)
     {
-        echo '<b>' . __METHOD__ . '</b><br>';
-        var_dump(func_get_args()); echo '<br>';
+        if (file_exists($this->getStorageFile())) {
+            unlink($this->getStorageFile());
+            $this->container = new Container();
+        }
+    }
+
+    /**
+     * Returns the session id.
+     *
+     * @return string
+     */
+    public function getSessionId()
+    {
+        return $this->session_id;
     }
 
     private function getStorageFile()

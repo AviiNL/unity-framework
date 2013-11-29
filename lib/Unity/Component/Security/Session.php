@@ -25,6 +25,14 @@ class Session extends Service
     }
 
     /**
+     * Kills the entire session. Use with caution!
+     */
+    public function kill()
+    {
+        $this->manager->destroy($this->manager->getSessionId());
+    }
+
+    /**
      * @param string $key
      * @param mixed $value
      */

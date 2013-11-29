@@ -13,14 +13,6 @@ abstract class SecurityUser
     /**
      * @param string $username
      */
-    public function __construct($username)
-    {
-        $this->username = $username;
-    }
-
-    /**
-     * @param string $username
-     */
     protected function setUsername($username)
     {
         $this->username = $username;

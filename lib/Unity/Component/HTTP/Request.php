@@ -49,12 +49,13 @@ class Request extends Service
           ENV_XHR = 'XHR',
           ENV_WEB = 'WEB';
 
-    private $parameters  = null,
-            $headers     = null,
-            $path        = null,
-            $ip          = null,
-            $origin      = null,
-            $environment = null;
+    private $parameters       = null,
+            $headers          = null,
+            $path             = null,
+            $ip               = null,
+            $origin           = null,
+            $environment      = null,
+            $previous_request = null;
 
     public function __construct()
     {

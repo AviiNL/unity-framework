@@ -27,9 +27,9 @@
 */
 namespace Unity\Component\Service;
 
-use Unity\Component\Container\Container;
-
 use Unity\Component\Kernel\IService;
+use Unity\Component\Container\Container;
+use Unity\Component\Parameter\ParameterNotFoundException;
 
 /**
  * A service represents a class that's instantiated once directly at framework
@@ -49,6 +49,11 @@ abstract class Service implements IService
     private $container    = null;
 
     /**
+     * @var \Unity\Component\Service\ServiceOptions
+     */
+    private $options      = null;
+
+    /**
      * Defines the name of this service. A service name should be classified as
      * a 'slug', consisting only of lower-case characters, numerals and a dash.
      *
@@ -58,7 +63,7 @@ abstract class Service implements IService
      * @param string $name
      * @throws \InvalidArgumentException
      * @throws InvalidServiceNameException
-     * @return Service
+     * @return \Unity\Component\Service\Service
      */
     final protected function setName($name)
     {
@@ -71,7 +76,62 @@ abstract class Service implements IService
         if ($name !== ($slug = $this->slugify($name))) {
             throw new InvalidServiceNameException($name, $slug);
         }
+
+        $this->options   = new ServiceOptions($this->container->get('parameters'));
+
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * Returns an option value.
+     *
+     * @param string $name
+     * @throws ParameterNotFoundException
+     * @return mixed
+     */
+    final protected function getOption($name)
+    {
+        return $this->options->getOption($name);
+    }
+
+    /**
+     * Declares the given option name as 'mandatory'. An exception will
+     * be thrown with the given description if the option is not registered.
+     *
+     * @param string $name
+     * @param string $description
+     * @throws OptionNotFoundException
+     * @return \Unity\Component\Service\Service
+     */
+    final protected function addRequiredOption($name, $description)
+    {
+        $this->options->addRequiredOption($name, $description);
+        return $this;
+    }
+
+    /**
+     * @param string $prefix
+     * @return \Unity\Component\Service\Service
+     */
+    final protected function setOptionPrefix($prefix)
+    {
+        $this->options->setOptionPrefix($prefix);
+        return $this;
+    }
+
+    /**
+     * Adds an option. If the option is not registered, the given default
+     * value will be set in the paramter container instead to ensure the
+     * availability of the option.
+     *
+     * @param string $name
+     * @param mixed $default_value
+     * @return \Unity\Component\Service\Service
+     */
+    final protected function addOption($name, $default_value)
+    {
+        $this->options->addOption($name, $default_value);
         return $this;
     }
 
@@ -110,7 +170,7 @@ abstract class Service implements IService
      *
      * @param string $name
      * @throws InvalidServiceNameException
-     * @return Service
+     * @return \Unity\Component\Service\Service
      */
     final protected function addDependency($name)
     {
@@ -151,6 +211,8 @@ abstract class Service implements IService
           throw new ServiceWithoutConfigureMethodException(
               'Service ' . $this->name . ' has dependencies and therefore must have a "configure" method.');
         }
+
+        $this->options = new ServiceOptions($this->container->get('parameters'));
 
         $args      = array();
         $services  = $this->container->toArray();

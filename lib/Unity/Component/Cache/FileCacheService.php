@@ -116,7 +116,6 @@ class FileCacheService extends Service
     {
         return md5(dirname($file))
                                    . '-' . md5(json_encode($cache_data))
-                                   . '-' . filesize($file)
                                    . '-' . basename($file);
     }
 }
