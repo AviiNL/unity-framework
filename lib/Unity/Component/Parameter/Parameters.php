@@ -73,6 +73,14 @@ class Parameters extends Service
      */
     public function setParameter($key, $value)
     {
+        if (strpos($value, '%') !== false) {
+            preg_match_all('/%(.*)%/', $value, $matches);
+            foreach ($matches[0] as $match) {
+                if (!empty($match)) {
+                    $value = str_replace($match, $this->getParameter(trim($match, '%')), $value);
+                }
+            }
+        }
         $this->container->set($key, $value);
     }
 
@@ -85,7 +93,7 @@ class Parameters extends Service
     {
         $data = $this->yaml->parseFile($filename);
         foreach((array)$data as $key => $value) {
-            $this->container->set($key, $value);
+            $this->setParameter($key, $value);
         }
     }
 }

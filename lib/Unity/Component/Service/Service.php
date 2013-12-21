@@ -77,7 +77,7 @@ abstract class Service implements IService
             throw new InvalidServiceNameException($name, $slug);
         }
 
-        $this->options   = new ServiceOptions($this->container->get('parameters'));
+        $this->options = new ServiceOptions($this->container->get('parameters'));
 
         $this->name = $name;
         return $this;
