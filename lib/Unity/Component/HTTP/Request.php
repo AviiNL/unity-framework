@@ -151,11 +151,11 @@ class Request extends Service
      */
     public function getParameter($key, $default = null)
     {
-        if ($default !== ($v = $this->parameters->get('POST.' . $key))) {
+        if ($default !== ($v = $this->parameters->get('POST.' . $key, $default))) {
           return $v;
-        } elseif ($default !== ($v = $this->parameters->get('GET.' . $key))) {
+        } elseif ($default !== ($v = $this->parameters->get('GET.' . $key, $default))) {
           return $v;
-        } elseif ($default !== ($v = $this->parameters->get('FILES.' . $key))) {
+        } elseif ($default !== ($v = $this->parameters->get('FILES.' . $key, $default))) {
           return $v;
         } else {
           return $default;
