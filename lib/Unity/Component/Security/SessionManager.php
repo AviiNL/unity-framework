@@ -12,6 +12,7 @@ use Unity\Component\Container\Container;
 use Unity\Component\Parameter\Parameters;
 use Unity\Component\Parameter\ParameterNotFoundException;
 use Unity\Component\Yaml\YamlService;
+use Unity\Component\HTTP\Request;
 
 /**
  * @author Harold Iedema <harold@iedema.me>
@@ -21,8 +22,10 @@ class SessionManager extends Service implements \SessionHandlerInterface
     /**
      * @var Container
      */
-    private $storage        = null;
-    private $original_stor  = null;
+    private $storage          = null;
+    private $original_storage = null;
+
+    private $path;
 
     /**
      * @var YamlService
@@ -46,13 +49,14 @@ class SessionManager extends Service implements \SessionHandlerInterface
     {
         $this->setName('session-manager')
              ->addDependency('yaml')
-             ->addDependency('event-manager');
+             ->addDependency('event-manager')
+             ->addDependency('request');
     }
 
     /**
      * @param Parameters $parameters
      */
-    protected function configure(YamlService $yaml_service, EventManager $em)
+    protected function configure(YamlService $yaml_service, EventManager $em, Request $r)
     {
         $this->yaml_service  = $yaml_service;
         $this->event_manager = $em;
@@ -68,6 +72,9 @@ class SessionManager extends Service implements \SessionHandlerInterface
         $this->storage_path   = $this->getOption('storage_path');
         $this->storage_time   = $this->getOption('storage_time');
         $this->session_prefix = $this->getOption('file_prefix');
+
+        @session_destroy();
+        $this->path = $r->getPath();
 
         session_set_save_handler($this, true);
         session_start();
@@ -87,6 +94,11 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function open($save_path, $name)
     {
+        if (!isset($_COOKIE[$name])) {
+            // @FIXME - When image-resources are loaded, PHPSESSID is not passed correctly,
+            //          causing new sessions being generated on every request.
+            return;
+        }
         $sess_id = session_id();
         if (isset($_COOKIE[$name])) {
             $this->session_id = $_COOKIE[$name];
@@ -104,6 +116,7 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function read($session_id)
     {
+        if (!$this->session_id) return;
         $data = [];
         if (file_exists($this->getStorageFile())) {
             $data = json_decode(file_get_contents($this->getStorageFile()), true);
@@ -112,7 +125,7 @@ class SessionManager extends Service implements \SessionHandlerInterface
             }
         }
         $this->storage = new Container($data);
-        $this->original_stor = new Container($data);
+        $this->original_storage = new Container($data);
         if (!file_exists($this->getStorageFile())) {
             $this->storage->set('session_id', $this->session_id);
         }
@@ -126,9 +139,10 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function write($session_id, $session_data)
     {
+        if (!$this->session_id) return;
         $this->event_manager->trigger('session.close');
         $data = json_encode($this->storage->toArray());
-        if ($data != json_encode($this->original_stor->toArray())) {
+        if ($data != json_encode($this->original_storage->toArray())) {
             file_put_contents($this->getStorageFile(), $data);
         }
     }
@@ -155,6 +169,7 @@ class SessionManager extends Service implements \SessionHandlerInterface
      */
     public function destroy($session_id)
     {
+        if (!$this->session_id) return;
         if (file_exists($this->getStorageFile())) {
             unlink($this->getStorageFile());
             $this->container = new Container();

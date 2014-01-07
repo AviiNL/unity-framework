@@ -46,4 +46,20 @@ class Annotation
         $this->value     = $value;
         $this->reflector = $reflector;
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getValue()
+    {
+        return $this->value;
+    }
 }

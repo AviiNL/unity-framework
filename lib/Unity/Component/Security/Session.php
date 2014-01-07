@@ -47,6 +47,9 @@ class Session extends Service
      */
     public function get($key, $default = null)
     {
+        if (!$this->manager->getStorage()) {
+            return $default;
+        }
         return $this->manager->getStorage()->get($key, $default);
     }
 
