@@ -114,8 +114,8 @@ class Dispatcher extends Service
         $this->annotation_reader = $ar;
         $this->bundle_manager    = $bm;
 
-        $this->em->register(new EventListener('dispatcher.on_route', true));
         $this->em->register(new EventListener('dispatcher.on_resource', true));
+        $this->em->register(new EventListener('dispatcher.on_route', true));
         $this->em->register(new EventListener('dispatcher.404', true));
 
         $this->em->getEvent('dispatcher.404')->bind(function(EventListener $e){
@@ -132,7 +132,20 @@ class Dispatcher extends Service
         if ($this->request->getEnvironment() == Request::ENV_CLI) {
             throw DispatcherException::notAvailableInCLI();
         }
-
+        
+        // Resources
+        foreach ($this->bundle_manager->getBundles() as $bundle) {
+            /* @var $bundle \Unity\Component\Kernel\Bundle */
+            if (empty($this->request->getPath())) break;
+            if (null !== ($file = $bundle['class']->findResource($this->request->getPath()))) {
+                $this->em->trigger('dispatcher.on_resource', [
+                    'resource' => $file,
+                    'file'     => $file
+                ]);
+                return;
+            }
+        }
+        
         // Controllers
         $routes = $this->collectRoutes();
         foreach ($routes as $data) {
@@ -155,17 +168,6 @@ class Dispatcher extends Service
             }
         }
 
-        // Resources
-        foreach ($this->bundle_manager->getBundles() as $bundle) {
-            /* @var $bundle \Unity\Component\Kernel\Bundle */
-            if(null !== ($file = $bundle['class']->findResource($this->request->getPath()))) {
-                $this->em->trigger('dispatcher.on_resource', array(
-                        'resource' => $file,
-                        'file'     => $file
-                ));
-                return;
-            }
-        }
 
         $this->em->trigger('dispatcher.404', array('routes' => $routes));
     }
